@@ -10,6 +10,7 @@ const DATA_FILE = path.join(__dirname, 'data', 'submissions.json');
 
 // Password for viewing data - CHANGE THIS!
 const VIEW_PASSWORD = process.env.VIEW_PASSWORD || '22351';
+const DEV_PASSWORD = process.env.DEV_PASSWORD || 'dev22351admin';
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, 'data');
@@ -27,6 +28,15 @@ if (!fs.existsSync(DATA_FILE)) {
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// Disable caching for development
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
+
 app.use(express.static('public'));
 
 // Helper functions
@@ -56,18 +66,30 @@ function writeData(data) {
 // Authentication middleware
 function checkAuth(req, res, next) {
     const authHeader = req.headers.authorization;
-    if (authHeader === `Bearer ${VIEW_PASSWORD}`) {
+    if (authHeader === `Bearer ${VIEW_PASSWORD}` || authHeader === `Bearer ${DEV_PASSWORD}`) {
         next();
     } else {
         res.status(401).json({ error: 'Unauthorized' });
     }
 }
 
+// Dev-only middleware
+function checkDevAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (authHeader === `Bearer ${DEV_PASSWORD}`) {
+        next();
+    } else {
+        res.status(403).json({ error: 'Forbidden - Dev access required' });
+    }
+}
+
 // Login endpoint
 app.post('/api/login', (req, res) => {
     const { password } = req.body;
-    if (password === VIEW_PASSWORD) {
-        res.json({ success: true, token: VIEW_PASSWORD });
+    if (password === DEV_PASSWORD) {
+        res.json({ success: true, token: DEV_PASSWORD, role: 'dev' });
+    } else if (password === VIEW_PASSWORD) {
+        res.json({ success: true, token: VIEW_PASSWORD, role: 'view' });
     } else {
         res.status(401).json({ success: false, error: 'Invalid password' });
     }
@@ -151,13 +173,14 @@ app.get('/api/data/match/:matchNumber', checkAuth, (req, res) => {
 });
 
 // Delete specific entry (optional - for data management)
-app.delete('/api/data/:id', (req, res) => {
+app.delete('/api/data/:id', checkDevAuth, (req, res) => {
     try {
         const id = req.params.id;
         const data = readData();
         const filteredData = data.filter(entry => entry.id !== id);
         
         if (writeData(filteredData)) {
+            console.log('🗑️ Entry deleted by dev:', id);
             res.json({ 
                 success: true, 
                 message: 'Entry deleted successfully',
@@ -169,6 +192,21 @@ app.delete('/api/data/:id', (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Failed to delete entry' });
+    }
+});
+
+// Clear all data (dev only)
+app.delete('/api/data', checkDevAuth, (req, res) => {
+    try {
+        if (writeData([])) {
+            console.log('🗑️ All data cleared by dev');
+            res.json({ success: true, message: 'All data cleared' });
+        } else {
+            res.status(500).json({ error: 'Failed to clear data' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Failed to clear data' });
     }
 });
 

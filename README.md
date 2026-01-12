@@ -52,6 +52,25 @@ npm start
 Open your browser and go to `http://localhost:3000`
 
 **Default View Password:** `22351` (your team number)
+**Default Dev Password:** `dev22351admin` (change this immediately!)
+
+## 🔐 Password System
+
+The app has **two levels of access**:
+
+1. **View Access** (password: `22351`)
+   - See all submitted data
+   - Filter and search entries
+   - Export CSV/JSON
+
+2. **Developer Access** (password: `dev22351admin`)
+   - Everything in View Access
+   - Statistics dashboard
+   - Delete individual entries
+   - Clear all data
+   - Data backup/export
+
+**⚠️ IMPORTANT:** Change both passwords before deployment!
 
 ### Development Mode
 

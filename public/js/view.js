@@ -21,15 +21,34 @@ const lastUpdated = document.getElementById('lastUpdated');
 let allData = [];
 let filteredData = [];
 let authToken = null;
+let userRole = null;
+let autoRefreshInterval = null;
 
 // Check for stored auth token
 window.addEventListener('load', () => {
     authToken = sessionStorage.getItem('authToken');
+    userRole = sessionStorage.getItem('userRole');
     if (authToken) {
         showDataSection();
         loadData();
+        startAutoRefresh();
     }
 });
+
+// Auto-refresh every 5 seconds
+function startAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        loadData(true); // Silent refresh
+    }, 5000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
 
 // Login form handler
 if (loginForm) {
@@ -64,6 +83,7 @@ if (loginForm) {
 // Logout handler
 if (logoutButton) {
     logoutButton.addEventListener('click', () => {
+        stopAutoRefresh();
         sessionStorage.removeItem('authToken');
         authToken = null;
         loginSection.style.display = 'block';
@@ -107,9 +127,11 @@ if (filterMatch) {
 }
 
 // Load data from API
-async function loadData() {
+async function loadData(silent = false) {
     try {
-        dataContainer.innerHTML = '<div class="loading-message">Loading data...</div>';
+        if (!silent) {
+            dataContainer.innerHTML = '<div class="loading-message">Loading data...</div>';
+        }
         
         const response = await fetch(`${API_URL}/data`, {
             headers: {
@@ -121,6 +143,7 @@ async function loadData() {
             // Unauthorized - clear token and show login
             sessionStorage.removeItem('authToken');
             authToken = null;
+            stopAutoRefresh();
             loginSection.style.display = 'block';
             dataSection.style.display = 'none';
             showLoginError('Session expired. Please login again.');
@@ -131,22 +154,29 @@ async function loadData() {
             throw new Error('Failed to load data');
         }
         
-        allData = await response.json();
-        filteredData = allData;
+        const newData = await response.json();
         
-        // Update stats
-        totalEntries.textContent = `${allData.length} entries`;
-        lastUpdated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-        
-        // Populate match filter
-        populateMatchFilter();
-        
-        // Display data
-        displayData(filteredData);
+        // Only update if data changed
+        if (JSON.stringify(newData) !== JSON.stringify(allData)) {
+            allData = newData;
+            filteredData = allData;
+            
+            // Update stats
+            totalEntries.textContent = `${allData.length} entries`;
+            lastUpdated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            
+            // Populate match filter
+            populateMatchFilter();
+            
+            // Display data
+            displayData(filteredData);
+        }
         
     } catch (error) {
         console.error('Error loading data:', error);
-        dataContainer.innerHTML = '<div class="no-data-message">⚠ Failed to load data. Please check your connection.</div>';
+        if (!silent) {
+            dataContainer.innerHTML = '<div class="no-data-message">⚠ Failed to load data. Please check your connection.</div>';
+        }
     }
 }
 

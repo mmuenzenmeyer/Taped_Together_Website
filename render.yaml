@@ -7,3 +7,5 @@ services:
     envVars:
       - key: VIEW_PASSWORD
         sync: false
+      - key: DEV_PASSWORD
+        sync: false

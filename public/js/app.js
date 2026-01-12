@@ -11,6 +11,88 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// API endpoint
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api' 
+    : '/api';
+
+// Login Modal Handler
+const loginBtn = document.getElementById('teamLoginBtn');
+const loginModal = document.getElementById('loginModal');
+const modalClose = document.getElementById('modalClose');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+
+if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+        loginModal.style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('password').focus();
+        }, 100);
+    });
+}
+
+if (modalClose) {
+    modalClose.addEventListener('click', () => {
+        loginModal.style.display = 'none';
+        document.getElementById('password').value = '';
+        loginError.style.display = 'none';
+    });
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    if (e.target === loginModal) {
+        loginModal.style.display = 'none';
+        document.getElementById('password').value = '';
+        loginError.style.display = 'none';
+    }
+});
+
+// Handle login form
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('password').value;
+        
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                sessionStorage.setItem('authToken', result.token);
+                sessionStorage.setItem('userRole', result.role);
+                
+                // Redirect based on role
+                if (result.role === 'dev') {
+                    window.location.href = '/dev.html';
+                } else {
+                    window.location.href = '/view.html';
+                }
+            } else {
+                showLoginError('Invalid password');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showLoginError('Login failed. Please try again.');
+        }
+    });
+}
+
+function showLoginError(message) {
+    loginError.textContent = message;
+    loginError.className = 'status-message error';
+    loginError.style.display = 'block';
+    setTimeout(() => {
+        loginError.style.display = 'none';
+    }, 3000);
+}
+
 // Install prompt
 let deferredPrompt;
 const installPrompt = document.getElementById('installPrompt');
