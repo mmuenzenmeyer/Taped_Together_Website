@@ -6,7 +6,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'submissions.json');
+const MATCH_DATA_FILE = path.join(__dirname, 'data', 'match-data.json');
+const PIT_DATA_FILE = path.join(__dirname, 'data', 'pit-data.json');
 
 // Password for viewing data - CHANGE THIS!
 const VIEW_PASSWORD = process.env.VIEW_PASSWORD || '22351';
@@ -19,10 +20,14 @@ if (!fs.existsSync(dataDir)) {
     console.log('Created data directory');
 }
 
-// Initialize data file if it doesn't exist
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-    console.log('Created submissions.json file');
+// Initialize data files if they don't exist
+if (!fs.existsSync(MATCH_DATA_FILE)) {
+    fs.writeFileSync(MATCH_DATA_FILE, JSON.stringify([]));
+    console.log('Created match-data.json file');
+}
+if (!fs.existsSync(PIT_DATA_FILE)) {
+    fs.writeFileSync(PIT_DATA_FILE, JSON.stringify([]));
+    console.log('Created pit-data.json file');
 }
 
 // Middleware
@@ -40,10 +45,10 @@ app.use((req, res, next) => {
 app.use(express.static('public'));
 
 // Helper functions
-function readData() {
+function readData(filePath) {
     try {
-        if (fs.existsSync(DATA_FILE)) {
-            const data = fs.readFileSync(DATA_FILE, 'utf8');
+        if (fs.existsSync(filePath)) {
+            const data = fs.readFileSync(filePath, 'utf8');
             return JSON.parse(data);
         }
         return [];
@@ -53,9 +58,9 @@ function readData() {
     }
 }
 
-function writeData(data) {
+function writeData(filePath, data) {
     try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
         return true;
     } catch (error) {
         console.error('Error writing data:', error);
@@ -97,22 +102,18 @@ app.post('/api/login', (req, res) => {
 
 // API Routes
 
-// Submit scouting data
-app.post('/api/submit', (req, res) => {
+// Submit pit scouting data (public)
+app.post('/api/submit-pit', (req, res) => {
     try {
         const submission = req.body;
         
-        console.log('📝 Receiving submission:', submission.teamNumber, 'Match', submission.matchNumber);
+        console.log('🔧 Receiving pit data: Team', submission.teamNumber);
         
-        // Validate required fields
-        if (!submission.teamNumber || !submission.matchNumber) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        if (!submission.teamNumber) {
+            return res.status(400).json({ error: 'Missing team number' });
         }
         
-        // Read existing data
-        const data = readData();
-        
-        // Add new submission with server timestamp
+        const data = readData(PIT_DATA_FILE);
         const entry = {
             id: Date.now().toString(),
             ...submission,
@@ -121,25 +122,107 @@ app.post('/api/submit', (req, res) => {
         
         data.push(entry);
         
-        // Save to file
-        if (writeData(data)) {
-            console.log('✅ Data saved! Total entries:', data.length);
+        if (writeData(PIT_DATA_FILE, data)) {
+            console.log('✅ Pit data saved! Total entries:', data.length);
+            res.json({ success: true, message: 'Pit data submitted', id: entry.id });
+        } else {
+            res.status(500).json({ error: 'Failed to save pit data' });
+        }
+    } catch (error) {
+        console.error('Error submitting pit data:', error);
+        res.status(500).json({ error: 'Failed to save pit data' });
+    }
+});
+
+// Submit match scouting data (requires auth)
+app.post('/api/submit-match', checkAuth, (req, res) => {
+    try {
+        const submission = req.body;
+        
+        console.log('🎮 Receiving match data: Team', submission.teamNumber, 'Match', submission.matchNumber);
+        
+        if (!submission.teamNumber || !submission.matchNumber) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        const data = readData(MATCH_DATA_FILE);
+        const entry = {
+            id: Date.now().toString(),
+            ...submission,
+            serverTimestamp: new Date().toISOString()
+        };
+        
+        data.push(entry);
+        
+        if (writeData(MATCH_DATA_FILE, data)) {
+            console.log('✅ Match data saved! Total entries:', data.length);
+            res.json({ success: true, message: 'Match data submitted', id: entry.id });
+        } else {
+            res.status(500).json({ error: 'Failed to save match data' });
+        }
+    } catch (error) {
+        console.error('Error submitting match data:', error);
+        res.status(500).json({ error: 'Failed to save match data' });
+    }
+});
+
+// Get pit data (protected)
+app.get('/api/pit-data', checkAuth, (req, res) => {
+    try {
+        const data = readData(PIT_DATA_FILE);
+        console.log('📊 Sending', data.length, 'pit entries to client');
+        res.json(data);
+    } catch (error) {
+        console.error('Error reading pit data:', error);
+        res.status(500).json({ error: 'Failed to retrieve pit data' });
+    }
+});
+
+// Get match data (protected)
+app.get('/api/match-data', checkAuth, (req, res) => {
+    try {
+        const data = readData(MATCH_DATA_FILE);
+        console.log('📊 Sending', data.length, 'match entries to client');
+        res.json(data);
+    } catch (error) {
+        console.error('Error reading match data:', error);
+        res.status(500).json({ error: 'Failed to retrieve match data' });
+    }
+});
+
+// Legacy endpoint - for backwards compatibility
+app.post('/api/submit', (req, res) => {
+    try {
+        const submission = req.body;
+        console.log('📝 Receiving submission (legacy)');
+        
+        const data = readData(MATCH_DATA_FILE);
+        const entry = {
+            id: Date.now().toString(),
+            ...submission,
+            serverTimestamp: new Date().toISOString()
+        };
+        
+        data.push(entry);
+        
+        if (writeData(MATCH_DATA_FILE, data)) {
             res.json({ success: true, message: 'Data submitted successfully', id: entry.id });
         } else {
             res.status(500).json({ error: 'Failed to save data' });
         }
     } catch (error) {
-        console.error('Error submitting data:', error);
+        console.error('Error:', error);
         res.status(500).json({ error: 'Failed to save data' });
     }
 });
 
-// Get all data (protected)
+// Get all data (protected) - returns both match and pit data
 app.get('/api/data', checkAuth, (req, res) => {
     try {
-        const data = readData();
-        console.log('📊 Sending', data.length, 'entries to client');
-        res.json(data);
+        const matchData = readData(MATCH_DATA_FILE);
+        const pitData = readData(PIT_DATA_FILE);
+        console.log('📊 Sending combined data to client');
+        res.json({ matchData, pitData });
     } catch (error) {
         console.error('Error reading data:', error);
         res.status(500).json({ error: 'Failed to retrieve data' });
@@ -212,10 +295,14 @@ app.delete('/api/data', checkDevAuth, (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
+    const matchData = readData(MATCH_DATA_FILE);
+    const pitData = readData(PIT_DATA_FILE);
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        totalEntries: readData().length 
+        matchEntries: matchData.length,
+        pitEntries: pitData.length,
+        totalEntries: matchData.length + pitData.length
     });
 });
 

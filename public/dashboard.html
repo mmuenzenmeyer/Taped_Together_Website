@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FTC Team Dashboard">
+    <meta name="theme-color" content="#0f3460">
+    <title>Team Dashboard - FTC Scout</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
+    
+    <!-- Logout Button -->
+    <button id="logoutBtn" class="logout-btn" title="Logout">🚪</button>
+
+    <div class="container dashboard-container">
+        <header class="dashboard-header">
+            <h1>🤖 Team Dashboard</h1>
+            <p class="team-number">Team 22351</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="game-scouting">🎮 Game Scouting</button>
+            <button class="tab-btn" data-tab="pit-data">🔧 Pit Data</button>
+            <button class="tab-btn" data-tab="match-data">📊 Match Data</button>
+            <button class="tab-btn" data-tab="analytics">📈 Analytics</button>
+            <button class="tab-btn" data-tab="tools">🛠️ Tools</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Game Scouting Tab -->
+            <div id="game-scouting" class="tab-pane active">
+                <h2>Match Scouting</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Record match-by-match performance data</p>
+                
+                <form id="gameScoutingForm" class="scouting-form">
+                    <!-- Match Information -->
+                    <section class="form-section">
+                        <h3>Match Information</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="matchNumber">Match Number</label>
+                                <input type="number" id="matchNumber" name="matchNumber" placeholder="e.g., 1" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teamNumber">Team Number</label>
+                                <input type="number" id="teamNumber" name="teamNumber" placeholder="e.g., 12345" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="alliance">Alliance</label>
+                                <select id="alliance" name="alliance" required>
+                                    <option value="">Select...</option>
+                                    <option value="red">Red</option>
+                                    <option value="blue">Blue</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="scoutName">Scout Name</label>
+                                <input type="text" id="scoutName" name="scoutName" placeholder="Your name" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Autonomous Period -->
+                    <section class="form-section">
+                        <h3>Autonomous Period</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="autoMoved">Moved from Start?</label>
+                                <select id="autoMoved" name="autoMoved">
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="autoSamples">Samples Scored</label>
+                                <input type="number" id="autoSamples" name="autoSamples" min="0" value="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="autoSpecimens">Specimens Scored</label>
+                                <input type="number" id="autoSpecimens" name="autoSpecimens" min="0" value="0">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Teleop Period -->
+                    <section class="form-section">
+                        <h3>Teleop Period</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teleopSamples">Samples Scored</label>
+                                <input type="number" id="teleopSamples" name="teleopSamples" min="0" value="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teleopSpecimens">Specimens Scored</label>
+                                <input type="number" id="teleopSpecimens" name="teleopSpecimens" min="0" value="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="teleopDefense">Defense Played</label>
+                                <select id="teleopDefense" name="teleopDefense">
+                                    <option value="no">No</option>
+                                    <option value="some">Some</option>
+                                    <option value="heavy">Heavy</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- End Game -->
+                    <section class="form-section">
+                        <h3>End Game</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="endgameClimb">Climb Status</label>
+                                <select id="endgameClimb" name="endgameClimb">
+                                    <option value="none">No Attempt</option>
+                                    <option value="attempted">Attempted</option>
+                                    <option value="low">Low Rung</option>
+                                    <option value="high">High Rung</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="endgameParked">Parked?</label>
+                                <select id="endgameParked" name="endgameParked">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Performance Ratings -->
+                    <section class="form-section">
+                        <h3>Performance</h3>
+                        
+                        <div class="form-group">
+                            <label for="robotSpeed">Robot Speed (1-5)</label>
+                            <input type="range" id="robotSpeed" name="robotSpeed" min="1" max="5" value="3">
+                            <span id="speedValue" class="range-value">3</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">Match Notes</label>
+                            <textarea id="notes" name="notes" rows="4" placeholder="Observations, penalties, notable moments..."></textarea>
+                        </div>
+                    </section>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Submit Match Data</button>
+                        <button type="reset" class="btn btn-secondary">Clear Form</button>
+                    </div>
+
+                    <div id="gameScoutStatus" class="status-message"></div>
+                </form>
+            </div>
+
+            <!-- Pit Data Tab -->
+            <div id="pit-data" class="tab-pane">
+                <h2>Pit Scouting Data</h2>
+                <div class="data-controls">
+                    <input type="text" id="pitSearchInput" placeholder="Search teams..." class="search-input">
+                    <button class="btn btn-secondary" onclick="exportPitData()">📥 Export CSV</button>
+                </div>
+                <div id="pitDataList" class="data-list">
+                    <p class="loading">Loading pit data...</p>
+                </div>
+            </div>
+
+            <!-- Match Data Tab -->
+            <div id="match-data" class="tab-pane">
+                <h2>Match Data</h2>
+                
+                <!-- Filters -->
+                <div class="filter-panel">
+                    <h3>Filters</h3>
+                    <div class="filter-row">
+                        <input type="text" id="teamFilter" placeholder="Team #" class="filter-input">
+                        <input type="number" id="matchFilter" placeholder="Match #" class="filter-input">
+                        <select id="allianceFilter" class="filter-input">
+                            <option value="">All Alliances</option>
+                            <option value="red">Red</option>
+                            <option value="blue">Blue</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="applyFilters()">Apply</button>
+                        <button class="btn btn-text" onclick="clearFilters()">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Data Controls -->
+                <div class="data-controls">
+                    <div class="sort-controls">
+                        <label>Sort by:</label>
+                        <select id="sortBy" onchange="sortMatchData()">
+                            <option value="timestamp">Recent First</option>
+                            <option value="teamNumber">Team Number</option>
+                            <option value="matchNumber">Match Number</option>
+                            <option value="totalScore">Total Score</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportMatchData()">📥 Export CSV</button>
+                </div>
+
+                <div id="matchDataList" class="data-list">
+                    <p class="loading">Loading match data...</p>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-pane">
+                <h2>Analytics Dashboard</h2>
+                
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Teams</h3>
+                        <p class="stat-value" id="totalTeams">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Matches</h3>
+                        <p class="stat-value" id="totalMatches">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Score</h3>
+                        <p class="stat-value" id="avgScore">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Top Team</h3>
+                        <p class="stat-value" id="topTeam">-</p>
+                    </div>
+                </div>
+
+                <!-- Team Comparison -->
+                <div class="analytics-section">
+                    <h3>Team Comparison</h3>
+                    <div class="comparison-controls">
+                        <input type="number" id="compareTeam1" placeholder="Team 1" class="filter-input">
+                        <input type="number" id="compareTeam2" placeholder="Team 2" class="filter-input">
+                        <input type="number" id="compareTeam3" placeholder="Team 3 (optional)" class="filter-input">
+                        <button class="btn btn-primary" onclick="compareTeams()">Compare</button>
+                    </div>
+                    <div id="comparisonResults"></div>
+                </div>
+
+                <!-- Team Rankings -->
+                <div class="analytics-section">
+                    <h3>Team Rankings</h3>
+                    <div id="teamRankings" class="rankings-list">
+                        <p class="loading">Loading rankings...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools Tab -->
+            <div id="tools" class="tab-pane">
+                <h2>Team Tools</h2>
+                
+                <!-- QR Code -->
+                <section class="tool-section">
+                    <h3>🔗 QR Code Sharing</h3>
+                    <p>Generate a QR code for others to quickly access the pit scouting form</p>
+                    <button class="btn btn-primary" onclick="generateQR()">Generate QR Code</button>
+                    <div id="qrCodeDisplay"></div>
+                </section>
+
+                <!-- Comments & Collaboration -->
+                <section class="tool-section">
+                    <h3>💬 Team Comments</h3>
+                    <div class="form-group">
+                        <label for="commentTeam">Add comment for team:</label>
+                        <input type="number" id="commentTeam" placeholder="Team number">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="commentText" rows="3" placeholder="Your comment..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="addComment()">Add Comment</button>
+                    <div id="commentsDisplay" class="comments-list"></div>
+                </section>
+
+                <!-- Data Management -->
+                <section class="tool-section">
+                    <h3>🗄️ Data Management</h3>
+                    <div class="tool-actions">
+                        <button class="btn btn-secondary" onclick="backupData()">📦 Backup All Data</button>
+                        <button class="btn btn-secondary" onclick="exportAllCSV()">📥 Export All to CSV</button>
+                    </div>
+                </section>
+
+                <!-- Scout Activity -->
+                <section class="tool-section">
+                    <h3>👥 Scout Activity</h3>
+                    <div id="scoutActivity">
+                        <p class="loading">Loading activity...</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

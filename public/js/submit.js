@@ -3,6 +3,33 @@ const API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3000/api' 
     : '/api';
 
+// Check if team has already submitted
+function checkSubmissionStatus() {
+    const hasSubmitted = localStorage.getItem('ftc_submitted');
+    const teamNumber = localStorage.getItem('ftc_team_number');
+    
+    if (hasSubmitted === 'true') {
+        const form = document.getElementById('scoutingForm');
+        const message = document.getElementById('alreadySubmittedMessage');
+        const teamDisplay = message?.querySelector('.submitted-team-number');
+        
+        if (form) form.style.display = 'none';
+        if (message) {
+            message.style.display = 'block';
+            if (teamDisplay && teamNumber) {
+                teamDisplay.textContent = `Team #${teamNumber}`;
+            }
+        }
+    }
+}
+
+// Check on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkSubmissionStatus);
+} else {
+    checkSubmissionStatus();
+}
+
 // Form elements
 const form = document.getElementById('scoutingForm');
 const submitStatus = document.getElementById('submitStatus');
@@ -68,8 +95,21 @@ if (form) {
             
             // Success
             showStatus('✓ Data submitted successfully!', 'success');
-            form.reset();
-            speedValue.textContent = '3';
+            
+            // Mark as submitted in localStorage
+            localStorage.setItem('ftc_submitted', 'true');
+            localStorage.setItem('ftc_team_number', data.teamNumber);
+            
+            // Hide form and show thank you message
+            form.style.display = 'none';
+            const message = document.getElementById('alreadySubmittedMessage');
+            const teamDisplay = message?.querySelector('.submitted-team-number');
+            if (message) {
+                message.style.display = 'block';
+                if (teamDisplay) {
+                    teamDisplay.textContent = `Team #${data.teamNumber}`;
+                }
+            }
             
             // Store in IndexedDB for offline sync
             await storeOfflineData(data);

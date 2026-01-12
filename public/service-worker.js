@@ -1,14 +1,13 @@
-const CACHE_NAME = 'ftc-scout-v2';
+const CACHE_NAME = 'ftc-scout-v4';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/submit.html',
-  '/view.html',
+  '/pit-scout.html',
+  '/dashboard.html',
   '/dev.html',
   '/css/style.css',
   '/js/app.js',
-  '/js/submit.js',
-  '/js/view.js',
+  '/js/pit-scout.js',
+  '/js/dashboard.js',
   '/js/dev.js',
   '/manifest.json'
 ];

@@ -67,9 +67,12 @@ if (loginForm) {
             
             if (result.success) {
                 authToken = result.token;
+                userRole = result.role;
                 sessionStorage.setItem('authToken', authToken);
+                sessionStorage.setItem('userRole', userRole);
                 showDataSection();
                 loadData();
+                startAutoRefresh();
             } else {
                 showLoginError('Invalid password');
             }

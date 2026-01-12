@@ -65,14 +65,15 @@ if (loginForm) {
             const result = await response.json();
             
             if (result.success) {
-                sessionStorage.setItem('authToken', result.token);
+                sessionStorage.setItem('sessionToken', result.token);
                 sessionStorage.setItem('userRole', result.role);
                 
                 // Redirect based on role
                 if (result.role === 'dev') {
                     window.location.href = '/dev.html';
                 } else {
-                    window.location.href = '/view.html';
+                    // Regular team login goes to dashboard
+                    window.location.href = '/dashboard.html';
                 }
             } else {
                 showLoginError('Invalid password');

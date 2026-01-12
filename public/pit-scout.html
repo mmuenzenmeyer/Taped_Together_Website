@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FTC Pit Scouting - Team 22351">
+    <meta name="theme-color" content="#0f3460">
+    <title>Pit Scouting - FTC Scout</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+    <!-- Team Login Button -->
+    <button id="teamLoginBtn" class="team-login-btn" title="Team 22351 Login">🔐</button>
+
+    <div class="container">
+        <header>
+            <h1>🔧 Pit Scouting</h1>
+            <p class="team-number">Team 22351</p>
+            <p style="color: var(--accent-color); font-size: 0.9rem; margin-top: 10px;">
+                📋 Robot Capabilities & Design - No login required!
+            </p>
+        </header>
+
+        <main>
+            <div id="alreadySubmittedMessage" class="already-submitted" style="display: none;">
+                <h2>✅ Pit Data Submitted!</h2>
+                <p class="submitted-team-number" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem;"></p>
+                <p>Thank you for sharing your robot information.</p>
+                <p class="visit-message" style="color: var(--accent-color); font-weight: bold; margin-top: 20px; font-size: 1.1rem;">If you have any updates, please visit us!</p>
+            </div>
+            
+            <form id="pitScoutingForm" class="scouting-form">
+                <!-- Team Information -->
+                <section class="form-section">
+                    <h2>Team Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="teamNumber">Team Number</label>
+                        <input type="number" id="teamNumber" name="teamNumber" placeholder="e.g., 12345" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teamName">Team Name</label>
+                        <input type="text" id="teamName" name="teamName" placeholder="Team name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scoutName">Scout Name</label>
+                        <input type="text" id="scoutName" name="scoutName" placeholder="Your name" required>
+                    </div>
+                </section>
+
+                <!-- Robot Specifications -->
+                <section class="form-section">
+                    <h2>Robot Specifications</h2>
+                    
+                    <div class="form-group">
+                        <label for="drivetrainType">Drivetrain Type</label>
+                        <select id="drivetrainType" name="drivetrainType" required>
+                            <option value="">Select...</option>
+                            <option value="mecanum">Mecanum</option>
+                            <option value="tank">Tank/Traction</option>
+                            <option value="holonomic">Holonomic (X-Drive)</option>
+                            <option value="swerve">Swerve</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="driveMotors">Number of Drive Motors</label>
+                        <input type="number" id="driveMotors" name="driveMotors" min="1" max="8" value="4">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="robotWeight">Estimated Weight (lbs)</label>
+                        <input type="number" id="robotWeight" name="robotWeight" min="1" max="50" placeholder="Approximate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="robotDimensions">Dimensions (in)</label>
+                        <input type="text" id="robotDimensions" name="robotDimensions" placeholder="e.g., 18x18x18">
+                    </div>
+                </section>
+
+                <!-- Game-Specific Capabilities -->
+                <section class="form-section">
+                    <h2>Game Capabilities</h2>
+                    
+                    <div class="form-group">
+                        <label for="canScoreSamples">Can Score Samples?</label>
+                        <select id="canScoreSamples" name="canScoreSamples">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="canScoreSpecimens">Can Score Specimens?</label>
+                        <select id="canScoreSpecimens" name="canScoreSpecimens">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="intakeType">Intake Mechanism</label>
+                        <select id="intakeType" name="intakeType">
+                            <option value="none">None</option>
+                            <option value="claw">Claw/Gripper</option>
+                            <option value="roller">Roller Intake</option>
+                            <option value="conveyor">Conveyor/Belt</option>
+                            <option value="suction">Suction</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="canClimb">Climbing Capability</label>
+                        <select id="canClimb" name="canClimb">
+                            <option value="none">No Climbing</option>
+                            <option value="low">Low Rung Only</option>
+                            <option value="high">High Rung</option>
+                            <option value="both">Both Rungs</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="canPark">Can Park?</label>
+                        <select id="canPark" name="canPark">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Autonomous Capabilities -->
+                <section class="form-section">
+                    <h2>Autonomous</h2>
+                    
+                    <div class="form-group">
+                        <label for="hasAutonomous">Has Autonomous Program?</label>
+                        <select id="hasAutonomous" name="hasAutonomous">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="working">Work in Progress</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="autoCapabilities">Autonomous Capabilities</label>
+                        <textarea id="autoCapabilities" name="autoCapabilities" rows="3" placeholder="What can your robot do in autonomous? (e.g., score samples, park, etc.)"></textarea>
+                    </div>
+                </section>
+
+                <!-- Strategy & Notes -->
+                <section class="form-section">
+                    <h2>Strategy & Additional Info</h2>
+                    
+                    <div class="form-group">
+                        <label for="strengths">Robot Strengths</label>
+                        <textarea id="strengths" name="strengths" rows="3" placeholder="What is your robot best at?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weaknesses">Known Weaknesses</label>
+                        <textarea id="weaknesses" name="weaknesses" rows="3" placeholder="Any known issues or limitations?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="preferredRole">Preferred Alliance Role</label>
+                        <select id="preferredRole" name="preferredRole">
+                            <option value="scorer">Scorer (focus on points)</option>
+                            <option value="support">Support (help alliance)</option>
+                            <option value="defense">Defense</option>
+                            <option value="balanced">Balanced/Flexible</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" name="notes" rows="4" placeholder="Any other information about your robot..."></textarea>
+                    </div>
+                </section>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Submit Pit Data</button>
+                    <button type="reset" class="btn btn-secondary">Clear Form</button>
+                </div>
+
+                <div id="submitStatus" class="status-message"></div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Team Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pit-scout.js"></script>
+</body>
+</html>
