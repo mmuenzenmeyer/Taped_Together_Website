@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ftcscout-22351
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: VIEW_PASSWORD
+        sync: false

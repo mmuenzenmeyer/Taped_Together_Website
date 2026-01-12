@@ -11,6 +11,13 @@ const DATA_FILE = path.join(__dirname, 'data', 'submissions.json');
 // Password for viewing data - CHANGE THIS!
 const VIEW_PASSWORD = process.env.VIEW_PASSWORD || '22351';
 
+// Ensure data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log('Created data directory');
+}
+
 // Initialize data file if it doesn't exist
 if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify([]));
