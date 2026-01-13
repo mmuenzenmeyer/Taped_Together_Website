@@ -289,7 +289,7 @@
                 <h2>🎥 Team Videos</h2>
                 
                 <div class="youtube-link-section">
-                    <a href="https://www.youtube.com/@YourChannelName" target="_blank" rel="noopener" class="youtube-channel-btn">
+                    <a href="https://www.youtube.com/@tapedtogetherrobotics" target="_blank" rel="noopener" class="youtube-channel-btn">
                         <span>▶️</span>
                         <div>
                             <strong>Visit Our YouTube Channel</strong>
@@ -298,46 +298,12 @@
                     </a>
                 </div>
 
-                <div class="videos-grid">
-                    <a href="https://www.youtube.com/@YourChannelName" target="_blank" rel="noopener" class="video-card">
-                        <div class="video-placeholder">
-                            <span>🎬</span>
-                            <p>Robot Reveal Video</p>
-                        </div>
-                        <h3>Season Robot Reveal</h3>
-                        <p>First look at our competition robot and its capabilities.</p>
-                    </a>
-
-                    <a href="https://www.youtube.com/@YourChannelName" target="_blank" rel="noopener" class="video-card">
-                        <div class="video-placeholder">
-                            <span>🎬</span>
-                            <p>Competition Highlights</p>
-                        </div>
-                        <h3>Tournament Highlights</h3>
-                        <p>Best moments from our competition matches.</p>
-                    </a>
-
-                    <a href="https://www.youtube.com/@YourChannelName" target="_blank" rel="noopener" class="video-card">
-                        <div class="video-placeholder">
-                            <span>🎬</span>
-                            <p>Build Process</p>
-                        </div>
-                        <h3>Behind the Scenes</h3>
-                        <p>Watch our team work through the build season.</p>
-                    </a>
-
-                    <a href="https://www.youtube.com/@YourChannelName" target="_blank" rel="noopener" class="video-card">
-                        <div class="video-placeholder">
-                            <span>🎬</span>
-                            <p>Team Introduction</p>
-                        </div>
-                        <h3>Meet Team 22351</h3>
-                        <p>Get to know our team members and mentors.</p>
-                    </a>
+                <div id="videosGrid" class="videos-grid">
+                    <p class="loading" style="grid-column: 1/-1; text-align: center; padding: 40px;">Loading latest videos...</p>
                 </div>
 
-                <div class="video-note">
-                    <p>💡 <em>Update the YouTube channel link in the code to point to your actual channel!</em></p>
+                <div class="video-note" id="videoSetupNote">
+                    <p>💡 <em>To automatically load your YouTube videos, add your API key and channel ID below (scroll down in code)</em></p>
                 </div>
             </section>
 
@@ -403,6 +369,106 @@
     <script src="/js/app.js"></script>
     <script src="/js/pit-scout.js"></script>
     <script>
+        // ========================================
+        // YouTube Auto-Loader Configuration
+        // ========================================
+        // Get your API key: https://console.cloud.google.com/apis/credentials
+        // Get your channel ID: Go to your channel → About → Share → Copy channel ID
+        
+        const YOUTUBE_CONFIG = {
+            apiKey: 'AIzaSyBNRvN6x53zs_UhsCTbj8emJwVZFyNwN9o',  // Replace with your YouTube Data API key
+            channelId: 'UCqWVfHfqLcA9TpzF4nRdQWg',  // Replace with your channel ID (currently: tapedtogetherrobotics)
+            maxVideos: 8  // Number of recent videos to display
+        };
+
+        // Load YouTube videos automatically
+        async function loadYouTubeVideos() {
+            const videosGrid = document.getElementById('videosGrid');
+            const setupNote = document.getElementById('videoSetupNote');
+            
+            // Check if API key is configured
+            if (YOUTUBE_CONFIG.apiKey === 'AIzaSyBNRvN6x53zs_UhsCTbj8emJwVZFyNwN9o') {
+                videosGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: var(--surface); border-radius: var(--border-radius);">
+                        <h3 style="color: var(--accent-color); margin-bottom: 15px;">⚠️ YouTube API Not Configured</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">Follow the setup guide below to automatically load your latest videos!</p>
+                        <ol style="text-align: left; max-width: 600px; margin: 0 auto; color: var(--text-secondary); line-height: 1.8;">
+                            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: var(--accent-color);">Google Cloud Console</a></li>
+                            <li>Create a new project (or select existing)</li>
+                            <li>Enable "YouTube Data API v3"</li>
+                            <li>Create API Key in Credentials</li>
+                            <li>Copy your channel ID from YouTube channel → About tab</li>
+                            <li>Update YOUTUBE_CONFIG in home.html with your API key and channel ID</li>
+                        </ol>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Fetch latest videos from YouTube
+                const response = await fetch(
+                    `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_CONFIG.apiKey}&channelId=${YOUTUBE_CONFIG.channelId}&part=snippet,id&order=date&maxResults=${YOUTUBE_CONFIG.maxVideos}&type=video`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch videos');
+                }
+
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    // Clear loading message
+                    videosGrid.innerHTML = '';
+                    
+                    // Create video cards
+                    data.items.forEach(video => {
+                        const videoId = video.id.videoId;
+                        const title = video.snippet.title;
+                        const description = video.snippet.description.substring(0, 100) + '...';
+                        
+                        const videoCard = document.createElement('div');
+                        videoCard.className = 'video-card embedded';
+                        videoCard.innerHTML = `
+                            <div class="video-embed">
+                                <iframe 
+                                    src="https://www.youtube.com/embed/${videoId}" 
+                                    title="${title}" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" 
+                                    allowfullscreen
+                                    loading="lazy">
+                                </iframe>
+                            </div>
+                            <h3>${title}</h3>
+                            <p>${description}</p>
+                        `;
+                        
+                        videosGrid.appendChild(videoCard);
+                    });
+                    
+                    // Update setup note
+                    setupNote.innerHTML = `
+                        <p style="color: var(--text-primary);">✅ <strong>Auto-loading ${data.items.length} latest videos from your YouTube channel!</strong></p>
+                        <p style="margin-top: 10px; font-size: 0.9em; color: var(--text-secondary);">Videos update automatically as you publish new content.</p>
+                    `;
+                } else {
+                    videosGrid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                            <p style="color: var(--text-secondary);">No videos found on this channel yet. Upload your first video!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading YouTube videos:', error);
+                videosGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: var(--surface); border-radius: var(--border-radius);">
+                        <h3 style="color: #ff6b6b;">❌ Error Loading Videos</h3>
+                        <p style="color: var(--text-secondary); margin-top: 15px;">Check console for details. Make sure your API key is valid and YouTube Data API v3 is enabled.</p>
+                    </div>
+                `;
+            }
+        }
+
         // Tab navigation for main site
         const navBtns = document.querySelectorAll('.nav-btn');
         const contentPanes = document.querySelectorAll('.content-pane');
@@ -416,6 +482,11 @@
                 
                 btn.classList.add('active');
                 document.getElementById(tabName).classList.add('active');
+                
+                // Load videos when Videos tab is clicked (lazy load)
+                if (tabName === 'videos' && document.getElementById('videosGrid').children.length === 1) {
+                    loadYouTubeVideos();
+                }
             });
         });
     </script>

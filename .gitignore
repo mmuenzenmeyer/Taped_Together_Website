@@ -4,3 +4,4 @@ npm-debug.log
 *.log
 data/submissions.json
 .env
+*-firebase-*.json

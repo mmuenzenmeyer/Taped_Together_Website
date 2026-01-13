@@ -276,7 +276,7 @@
 
 .videos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 25px;
     margin-bottom: 30px;
 }
@@ -295,6 +295,28 @@
 .video-card:hover {
     border-color: var(--accent-color);
     transform: translateY(-5px);
+}
+
+.video-card.embedded {
+    cursor: default;
+}
+
+/* Video Embed Container */
+.video-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: linear-gradient(135deg, var(--primary-color), #006d72);
+    overflow: hidden;
+}
+
+.video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .video-placeholder {
@@ -337,6 +359,10 @@
 .video-note em {
     color: var(--text-secondary);
     font-size: 1.1rem;
+}
+
+.video-note p {
+    margin: 5px 0;
 }
 
 /* Robots Tab */

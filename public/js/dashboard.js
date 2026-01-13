@@ -6,7 +6,7 @@ const API_URL = window.location.hostname === 'localhost'
 // Check authentication on page load
 const sessionToken = sessionStorage.getItem('sessionToken');
 if (!sessionToken) {
-    window.location.href = '/pit-scout.html';
+    window.location.href = '/home.html';
 }
 
 // Theme toggle
@@ -30,7 +30,7 @@ if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
         sessionStorage.removeItem('sessionToken');
         sessionStorage.removeItem('userRole');
-        window.location.href = '/pit-scout.html';
+        window.location.href = '/home.html';
     });
 }
 
