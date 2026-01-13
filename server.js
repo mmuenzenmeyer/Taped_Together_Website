@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const admin = require('firebase-admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,16 +14,27 @@ const PIT_DATA_FILE = path.join(__dirname, 'data', 'pit-data.json');
 const VIEW_PASSWORD = process.env.VIEW_PASSWORD || '22351';
 const DEV_PASSWORD = process.env.DEV_PASSWORD || 'dev22351admin';
 
-// Cloud Storage Configuration (for future integration)
-// Uncomment and configure when ready to use cloud storage
-// const CLOUD_STORAGE_ENABLED = process.env.CLOUD_STORAGE_ENABLED === 'true';
-// const CLOUD_STORAGE_URL = process.env.CLOUD_STORAGE_URL; // e.g., Firebase, AWS S3, MongoDB Atlas
-// const CLOUD_STORAGE_KEY = process.env.CLOUD_STORAGE_KEY;
-// 
-// To enable cloud storage:
-// 1. Set environment variables for your cloud service
-// 2. Install required packages (e.g., firebase-admin, aws-sdk, mongodb)
-// 3. Uncomment and implement cloud sync functions below
+// Firebase Configuration
+const FIREBASE_ENABLED = process.env.FIREBASE_ENABLED === 'true';
+let db = null;
+
+if (FIREBASE_ENABLED) {
+    try {
+        // Initialize Firebase Admin SDK
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: process.env.FIREBASE_DATABASE_URL
+        });
+        
+        db = admin.firestore();
+        console.log('🔥 Firebase connected successfully!');
+    } catch (error) {
+        console.error('❌ Firebase initialization failed:', error.message);
+        console.log('⚠️  Falling back to local JSON storage');
+    }
+}
 
 // Ensure data directory exists
 const dataDir = path.join(__dirname, 'data');
@@ -56,7 +68,24 @@ app.use((req, res, next) => {
 app.use(express.static('public'));
 
 // Helper functions
-function readData(filePath) {
+async function readData(filePath) {
+    // Try Firebase first if enabled
+    if (FIREBASE_ENABLED && db) {
+        try {
+            const collectionName = filePath.includes('pit-data') ? 'pit-data' : 'match-data';
+            const snapshot = await db.collection(collectionName).get();
+            const data = [];
+            snapshot.forEach(doc => {
+                data.push({ id: doc.id, ...doc.data() });
+            });
+            console.log(`📥 Loaded ${data.length} entries from Firebase (${collectionName})`);
+            return data;
+        } catch (error) {
+            console.error('Error reading from Firebase, falling back to local:', error.message);
+        }
+    }
+    
+    // Fallback to local JSON
     try {
         if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf8');
@@ -69,13 +98,30 @@ function readData(filePath) {
     }
 }
 
-function writeData(filePath, data) {
+async function writeData(filePath, data) {
+    // Write to Firebase if enabled
+    if (FIREBASE_ENABLED && db) {
+        try {
+            const collectionName = filePath.includes('pit-data') ? 'pit-data' : 'match-data';
+            const batch = db.batch();
+            
+            // For new entries, only add the last one (most recent)
+            const latestEntry = data[data.length - 1];
+            if (latestEntry && latestEntry.id) {
+                const docRef = db.collection(collectionName).doc(latestEntry.id);
+                batch.set(docRef, latestEntry);
+            }
+            
+            await batch.commit();
+            console.log(`📤 Synced to Firebase (${collectionName})`);
+        } catch (error) {
+            console.error('Firebase write error:', error.message);
+        }
+    }
+    
+    // Always write to local JSON as backup
     try {
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        // TODO: Sync to cloud storage here when enabled
-        // if (CLOUD_STORAGE_ENABLED) {
-        //     syncToCloud(filePath, data);
-        // }
         return true;
     } catch (error) {
         console.error('Error writing data:', error);
@@ -83,36 +129,22 @@ function writeData(filePath, data) {
     }
 }
 
-// Cloud Storage Functions (for future use)
-// Uncomment and implement when ready
-// 
-// async function syncToCloud(filePath, data) {
-//     try {
-//         // Example for Firebase:
-//         // const db = admin.firestore();
-//         // await db.collection('scouting').doc('data').set({ data });
-//         
-//         // Example for MongoDB:
-//         // await mongoClient.db('ftc').collection('scouting').insertMany(data);
-//         
-//         // Example for AWS S3:
-//         // const s3 = new AWS.S3();
-//         // await s3.putObject({
-//         //     Bucket: 'your-bucket',
-//         //     Key: path.basename(filePath),
-//         //     Body: JSON.stringify(data)
-//         // }).promise();
-//         
-//         console.log('✅ Data synced to cloud');
-//     } catch (error) {
-//         console.error('❌ Cloud sync failed:', error);
-//     }
-// }
-// 
-// async function readFromCloud() {
-//     // Implement cloud data retrieval
-//     // Return data from cloud storage
-// }
+// Firebase helper function to clear collection (dev only)
+async function clearFirebaseCollection(collectionName) {
+    if (!FIREBASE_ENABLED || !db) return;
+    
+    try {
+        const snapshot = await db.collection(collectionName).get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        console.log(`🗑️  Cleared Firebase collection: ${collectionName}`);
+    } catch (error) {
+        console.error('Error clearing Firebase collection:', error);
+    }
+}
 
 // Authentication middleware
 function checkAuth(req, res, next) {
@@ -149,7 +181,7 @@ app.post('/api/login', (req, res) => {
 // API Routes
 
 // Submit pit scouting data (public)
-app.post('/api/submit-pit', (req, res) => {
+app.post('/api/submit-pit', async (req, res) => {
     try {
         const submission = req.body;
         
@@ -159,7 +191,7 @@ app.post('/api/submit-pit', (req, res) => {
             return res.status(400).json({ error: 'Missing team number' });
         }
         
-        const data = readData(PIT_DATA_FILE);
+        const data = await readData(PIT_DATA_FILE);
         const entry = {
             id: Date.now().toString(),
             ...submission,
@@ -168,7 +200,7 @@ app.post('/api/submit-pit', (req, res) => {
         
         data.push(entry);
         
-        if (writeData(PIT_DATA_FILE, data)) {
+        if (await writeData(PIT_DATA_FILE, data)) {
             console.log('✅ Pit data saved! Total entries:', data.length);
             res.json({ success: true, message: 'Pit data submitted', id: entry.id });
         } else {
@@ -181,7 +213,7 @@ app.post('/api/submit-pit', (req, res) => {
 });
 
 // Submit match scouting data (requires auth)
-app.post('/api/submit-match', checkAuth, (req, res) => {
+app.post('/api/submit-match', checkAuth, async (req, res) => {
     try {
         const submission = req.body;
         
@@ -191,7 +223,7 @@ app.post('/api/submit-match', checkAuth, (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
-        const data = readData(MATCH_DATA_FILE);
+        const data = await readData(MATCH_DATA_FILE);
         const entry = {
             id: Date.now().toString(),
             ...submission,
@@ -200,7 +232,7 @@ app.post('/api/submit-match', checkAuth, (req, res) => {
         
         data.push(entry);
         
-        if (writeData(MATCH_DATA_FILE, data)) {
+        if (await writeData(MATCH_DATA_FILE, data)) {
             console.log('✅ Match data saved! Total entries:', data.length);
             res.json({ success: true, message: 'Match data submitted', id: entry.id });
         } else {
@@ -213,9 +245,9 @@ app.post('/api/submit-match', checkAuth, (req, res) => {
 });
 
 // Get pit data (protected)
-app.get('/api/pit-data', checkAuth, (req, res) => {
+app.get('/api/pit-data', checkAuth, async (req, res) => {
     try {
-        const data = readData(PIT_DATA_FILE);
+        const data = await readData(PIT_DATA_FILE);
         console.log('📊 Sending', data.length, 'pit entries to client');
         res.json(data);
     } catch (error) {
@@ -225,9 +257,9 @@ app.get('/api/pit-data', checkAuth, (req, res) => {
 });
 
 // Get match data (protected)
-app.get('/api/match-data', checkAuth, (req, res) => {
+app.get('/api/match-data', checkAuth, async (req, res) => {
     try {
-        const data = readData(MATCH_DATA_FILE);
+        const data = await readData(MATCH_DATA_FILE);
         console.log('📊 Sending', data.length, 'match entries to client');
         res.json(data);
     } catch (error) {
@@ -263,10 +295,10 @@ app.post('/api/submit', (req, res) => {
 });
 
 // Get all data (protected) - returns both match and pit data
-app.get('/api/data', checkAuth, (req, res) => {
+app.get('/api/data', checkAuth, async (req, res) => {
     try {
-        const matchData = readData(MATCH_DATA_FILE);
-        const pitData = readData(PIT_DATA_FILE);
+        const matchData = await readData(MATCH_DATA_FILE);
+        const pitData = await readData(PIT_DATA_FILE);
         console.log('📊 Sending combined data to client');
         res.json({ matchData, pitData });
     } catch (error) {
@@ -340,15 +372,16 @@ app.delete('/api/data', checkDevAuth, (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
-    const matchData = readData(MATCH_DATA_FILE);
-    const pitData = readData(PIT_DATA_FILE);
+app.get('/api/health', async (req, res) => {
+    const matchData = await readData(MATCH_DATA_FILE);
+    const pitData = await readData(PIT_DATA_FILE);
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         matchEntries: matchData.length,
         pitEntries: pitData.length,
-        totalEntries: matchData.length + pitData.length
+        totalEntries: matchData.length + pitData.length,
+        firebaseEnabled: FIREBASE_ENABLED
     });
 });
 
